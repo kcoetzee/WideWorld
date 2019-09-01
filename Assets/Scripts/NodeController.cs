@@ -13,6 +13,9 @@ public class NodeController : ScriptableObject{
     private GameObject _gameObject;
     public List<Node> _nodes;
     private List<GameObject> _objects;
+
+    private GameObject _planet;
+
     public NodeController(){
         _objects = new List<GameObject>();
     }
@@ -52,7 +55,8 @@ public class NodeController : ScriptableObject{
             nodes.Add(new Node(NODE_TYPES.SHOP));
         }
          for(int i = 0; i < _eventCount; i++){
-            nodes.Add(new Node(NODE_TYPES.EVENT));
+            DecisionTree _decision = new DecisionTree("THIS IS AN EVENT BOET! BUT WHAT WILL YOU CHOOSE?", new Decision("option1", EVENT_OUTCOME.BATTLE), new Decision("Option2", EVENT_OUTCOME.NONE), null);
+            nodes.Add(new Node(NODE_TYPES.EVENT,_decision));
         }
          for(int i = 0; i < _battleCount; i++){
             nodes.Add(new Node(NODE_TYPES.BATTLE));

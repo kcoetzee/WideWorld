@@ -21,6 +21,10 @@ public class BattleManagerScript : MonoBehaviour
     // Start is called before the first frame update
     public void Start()
     {
+        
+    }
+
+    public void StartBattle(){
         _playerShip = new Ship("PLAYER", 20.0f, 5.0f, 1.0f);
         _playerShip.AddWeapon(new Weapon(WEAPONS_TYPE.CANNON, EFFECT_TYPE.NONE));
         _playerShip.AddWeapon(new Weapon(WEAPONS_TYPE.CANNON, EFFECT_TYPE.NONE));
@@ -45,7 +49,7 @@ public class BattleManagerScript : MonoBehaviour
 
     public void Turn()
     {
-        if (_timer > 3.0f)
+        if (_timer >0.2f)
         {
             Debug.Log("Turn Start");
             int MaxTurnsPerRound = _playerShip._crew.Count > _enemyShip._crew.Count ? _playerShip._crew.Count - 1 : _enemyShip._crew.Count - 1;

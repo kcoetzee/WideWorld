@@ -20,4 +20,8 @@ public class InformationScript : MonoBehaviour
         transform.Find("cannonballStock").GetComponent<Text>().text = player.GetComponent<PlayerScript>().cannonballs.ToString();     
         transform.Find("crewMembers").GetComponent<Text>().text = player.GetComponent<PlayerScript>().crewmembers.ToString();
     }
+
+    void UpdatePlayerInformation(){
+        
+    }
 }

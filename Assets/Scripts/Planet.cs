@@ -58,6 +58,7 @@ public class Planet : MonoBehaviour
 
     public int m_NumberOfHills = 5;
     public GameObject _battlePanel;
+    public GameObject _eventPanel;
 
     public float m_HillSizeMax = 1.0f;
     public float m_HillSizeMin = 0.1f;
@@ -65,6 +66,10 @@ public class Planet : MonoBehaviour
     public int m_NumberOfShops = 5;
     public float m_shopRangeMin = 3.0f;
     public Camera _camera;
+
+    public GameObject PanelDesc;
+    public GameObject PanelOption1;
+    public GameObject PanelOption2;
 
 
     // Internally, the Planet object stores its mesh as a child GameObject:
@@ -84,9 +89,6 @@ public class Planet : MonoBehaviour
     PolySet water = new PolySet();
 
     NodeController m_nodeController;
-
-    private SkyNet _skyNet;
-    private Ship _playerShip;
 
     public GameObject _battleManager;
     private BattleManagerScript _battleScript;
@@ -181,17 +183,9 @@ public class Planet : MonoBehaviour
         Node clicked = m_nodeController.checkNodes();
         if (clicked != null && !_disablePlanet)
         {
-       
-            if (clicked._nodeType == NODE_TYPES.BATTLE)
-            {
-                _battleManager.SetActive(true);
-                _battlePanel.SetActive(true);
-                _battleScript.Start();
-                //freezeplanet movement;
-                togglePlanet();
-                clicked._gameObject.GetComponent<MeshRenderer>().material.color = Color.magenta;
-
-            }
+            togglePlanet();
+            clicked.ExecuteNode(ref _battleScript ,ref _battlePanel ,ref _battleManager, ref _eventPanel, ref PanelDesc, ref PanelOption1, ref PanelOption2);
+         
         }
 
     }
