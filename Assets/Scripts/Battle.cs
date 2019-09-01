@@ -3,60 +3,124 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
+public enum AI_TYPE
+{
+    AGGRESSIVE = 0,
+    DEFENSIVE = 1,
+    RANDOM = 2
+}
+
+public class Strategy
+{
+    public int _aggro;
+    public int _defensive;
+    public int _chaos;
+    public Ship _ship;
+    public List<Move> _stratList;
+
+
+    public Strategy(int aggro, int def, int chaos, Ship ship)
+    {
+        if (aggro + def + chaos != 10)
+        {
+            Debug.Log("ITS GONNA BREAK!!");
+        }
+        _aggro = aggro;
+        _defensive = def;
+        _chaos = chaos;
+        _ship = ship;
+        _stratList = new List<Move>();
+    }
+
+    public List<Move> GenerateStrategyList()
+    {
+        for (int i = 0; i < _aggro; i++)
+        {
+            _stratList.Add(new Move(ABILITIES.ATTACK, Random.Range(0, _ship._weapons.Count)));
+        }
+        for (int i = 0; i < _defensive; i++)
+        {
+            if (Random.Range(0, 1) == 1)
+            {
+                _stratList.Add(new Move(ABILITIES.DEFEND, 0));
+            }
+            else
+            {
+                _stratList.Add(new Move(ABILITIES.DODGE, 0));
+            }
+        }
+        for (int i = 0; i < _chaos; i++)
+        {
+            ABILITIES ablity = (ABILITIES)Random.Range(0, 3);
+
+            if (ablity == ABILITIES.ATTACK)
+            {
+                _stratList.Add(new Move(ABILITIES.ATTACK, Random.Range(0, _ship._weapons.Count)));
+            }
+            else
+            {
+                _stratList.Add(new Move(ablity, 0));
+            }
+        }
+        return _stratList;
+    }
+
+}
+
+
 public class SkyNet
 {
-    public Ship _ship;
+    public Ship _playerShip;
     public int _level;
     public float _levelModifier;
     public List<Move> _currentSet;
     public List<Move> _lastSet;
-
-    public SkyNet(ref Ship ship, int level)
+    public Strategy _strategy;
+    public SkyNet(ref Ship ship, int level, Strategy strat)
     {
-        _ship = ship;
+        _playerShip = ship;
         _level = level;
+        _strategy = strat;
         ApplyLevelModifier();
         _lastSet = new List<Move>();
         _currentSet = new List<Move>();
+
 
         GenerateCrewList();
         GenerateMoveList();
     }
 
+
     public void GenerateMoveList()
     {
-        int  index = 0;
-        foreach (Crew _man in _ship._crew)
+        int index = 0;
+        List<Move> stratList = _strategy.GenerateStrategyList();
+        foreach (Crew _man in _playerShip._crew)
         {
-            
-            //gen list of moves per crew member
-            ABILITIES move = (ABILITIES)Random.Range(0, 3);
-            int wIndex = -1;
-            if (move == ABILITIES.ATTACK)
-            {
-                wIndex = Random.Range(0, _ship._weapons.Count);
-            }
-            _currentSet.Insert(index,new Move(move, wIndex));
+            //gen list of moves one per crew memeber
+            int moveIndex = Random.Range(0, stratList.Count);
+            _currentSet.Insert(index, stratList[moveIndex]);
+            stratList.RemoveAt(moveIndex);
             index++;
         }
-        _ship._turnMoves = _currentSet;
+        _playerShip._turnMoves = _currentSet;
     }
 
     public void GenerateCrewList()
     {
         int crewCount = (int)(2.0f * _levelModifier);
-        _ship._crew = new List<Crew>();
+        _playerShip._crew = new List<Crew>();
         for (int i = 0; i < crewCount; i++)
         {
             SPECIES species = (SPECIES)Random.Range(0, 3);
-            _ship._crew.Add(new Crew(species));
+            _playerShip._crew.Add(new Crew(species));
         }
     }
 
     public void update(Battle _currentBattle)
     {
         GenerateMoveList();
-        // if (_ship._health < _currentBattle._ship._health)
+        // if (_playerShip._health < _currentBattle._playerShip._health)
         // {
         //     GenerateMoveList();
         // }
@@ -87,32 +151,31 @@ public class Battle : ScriptableObject
 
     public bool _nextTurn = false;
     public SkyNet _skyNet;
-    public Ship _ship;
+    public Ship _playerShip;
 
     bool _battleActive = false;
     bool _nextRound = false;
     int turnIndex = 0;
 
-    public void StartBattle(Ship ship)
+    public void StartBattle(Ship playerShip, Ship enemy)
     {
-        _ship = ship;
-        _enemy = new Ship("ENEMY", 20.0f, 5.0f, 5.0f);
-        _enemy.AddWeapon(new Weapon(WEAPONS_TYPE.CANNON, EFFECT_TYPE.NONE));
-        _enemy.AddWeapon(new Weapon(WEAPONS_TYPE.CANNON, EFFECT_TYPE.NONE));
+        _playerShip = playerShip;
+        _enemy = enemy;
 
         // prepare skynet lists
-        _skyNet = new SkyNet(ref _enemy, _ship._level);
+        
+        _skyNet = new SkyNet(ref _enemy, _playerShip._level, new Strategy(7,2,1, _enemy));
 
         //set targets 
-        _enemy._target = _ship;
-        _ship._target = _enemy;
+        _enemy._target = _playerShip;
+        _playerShip._target = _enemy;
         _battleActive = true;
     }
 
 
     public void StartNextRound()
     {
-      
+
     }
 
     // Start is called before the first frame update
@@ -132,14 +195,14 @@ public class Battle : ScriptableObject
 
         if (_nextRound)
         {
-            int MaxTurnsPerRound = _ship._crew.Count > _enemy._crew.Count ? _ship._crew.Count - 1 : _enemy._crew.Count - 1;
+            int MaxTurnsPerRound = _playerShip._crew.Count > _enemy._crew.Count ? _playerShip._crew.Count - 1 : _enemy._crew.Count - 1;
             if (turnIndex <= MaxTurnsPerRound)
             {
                 //ship turn first (player)
                 Move shipMove;
-                if (turnIndex <= _ship._turnMoves.Count)
+                if (turnIndex <= _playerShip._turnMoves.Count)
                 {
-                    shipMove = _ship._turnMoves[turnIndex];
+                    shipMove = _playerShip._turnMoves[turnIndex];
                 }
                 else
                 {
@@ -157,10 +220,10 @@ public class Battle : ScriptableObject
                     enemyMove = new Move(ABILITIES.NONE, 0);
                 }
 
-                _ship.ExecuteTurn(turnIndex);
+                _playerShip.ExecuteTurn(turnIndex);
                 _enemy.ExecuteTurn(turnIndex);
 
-                _ship.update();
+                _playerShip.update();
                 _enemy.update();
                 _skyNet.update(this);
                 turnIndex++;
@@ -172,7 +235,7 @@ public class Battle : ScriptableObject
             }
 
         }
-        if (!_ship.isAlive || !_enemy.isAlive)
+        if (!_playerShip.isAlive || !_enemy.isAlive)
         {
             _battleActive = false;
         }

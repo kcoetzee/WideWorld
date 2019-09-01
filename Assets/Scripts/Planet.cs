@@ -57,13 +57,14 @@ public class Planet : MonoBehaviour
     public float m_ContinentSizeMin = 0.1f;
 
     public int m_NumberOfHills = 5;
-
+    public GameObject _battlePanel;
 
     public float m_HillSizeMax = 1.0f;
     public float m_HillSizeMin = 0.1f;
 
     public int m_NumberOfShops = 5;
     public float m_shopRangeMin = 3.0f;
+    public Camera _camera;
 
 
     // Internally, the Planet object stores its mesh as a child GameObject:
@@ -77,7 +78,6 @@ public class Planet : MonoBehaviour
     Color32 colorOcean = new Color32(0, 80, 220, 0);
     Color32 colorGrass = new Color32(0, 220, 0, 0);
     Color32 colorDirt = new Color32(180, 140, 20, 0);
-
     PolySet landPolys = new PolySet();
     PolySet hillPolys = new PolySet();
 
@@ -88,7 +88,9 @@ public class Planet : MonoBehaviour
     private SkyNet _skyNet;
     private Ship _playerShip;
 
-    private Battle _currBattle;
+    public GameObject _battleManager;
+    private BattleManagerScript _battleScript;
+    public bool _disablePlanet = false;
 
     public void Start()
     {
@@ -155,48 +157,50 @@ public class Planet : MonoBehaviour
             side.m_Color = colorDirt;
         }
 
-        // Okay, we're done! Let's generate an actual game mesh for this planet.
-
+        _battleManager = Object.Instantiate(_battleManager, Vector3.zero, Quaternion.identity);
+        _battleScript = _battleManager.GetComponent<BattleManagerScript>();
         GenerateMesh();
         GetWaterPolygons();
         SpawnNodes(water);
     }
     public void Update()
     {
-
-        if (_currBattle!= null){
-            if (_currBattle.Update())
+        if (_disablePlanet)
+        {
+            _battleScript.Update();
+            if (_battleScript._battleOver)
             {
-                //update own synet for testing
-                _skyNet.update(_currBattle);
-            }else{
-                Object.Destroy(_currBattle);
+                togglePlanet();
+                _battleManager.SetActive(false);
+                _battlePanel.SetActive(false);
             }
         }
-        else
-        {
-            Node clicked = m_nodeController.checkNodes();
-            if (clicked != null)
-            {
-                //freezeplanet movement;
-                if (clicked._nodeType == NODE_TYPES.BATTLE)
-                {
-                    _playerShip = new Ship("PLAYER", 20.0f, 5.0f, 1.0f);
-                    _playerShip.AddWeapon(new Weapon(WEAPONS_TYPE.CANNON, EFFECT_TYPE.NONE));
-                    _playerShip.AddWeapon(new Weapon(WEAPONS_TYPE.CANNON, EFFECT_TYPE.NONE));
-                    _playerShip._level = 1;
 
-                    _skyNet = new SkyNet(ref _playerShip, _playerShip._level);
-                    _currBattle =  ScriptableObject.CreateInstance<Battle>();
-                    _currBattle.StartBattle(_playerShip);
-                    clicked._gameObject.GetComponent<MeshRenderer>().material.color = Color.magenta;
-                }
+
+
+        Node clicked = m_nodeController.checkNodes();
+        if (clicked != null && !_disablePlanet)
+        {
+       
+            if (clicked._nodeType == NODE_TYPES.BATTLE)
+            {
+                _battleManager.SetActive(true);
+                _battlePanel.SetActive(true);
+                _battleScript.Start();
+                //freezeplanet movement;
+                togglePlanet();
+                clicked._gameObject.GetComponent<MeshRenderer>().material.color = Color.magenta;
+
             }
-            
         }
 
     }
 
+    public void togglePlanet()
+    {
+        _disablePlanet = !_disablePlanet;
+        _camera.GetComponent<MovePlanet>().enabled = !_disablePlanet;
+    }
 
     public void GetWaterPolygons()
     {
@@ -466,29 +470,7 @@ public class Planet : MonoBehaviour
         return newSet;
     }
 
-    // public PolySet Inset(PolySet polys, float interpolation)
-    // {
-    //     PolySet stitchedPolys = StitchPolys(polys);
-    //     List<int> verts = polys.GetUniqueVertices();
-    //     //Calculate the average center of all the vertices
-    //     //in these Polygons.
-    //     Vector3 center = Vector3.zero;
-    //     foreach (int vert in verts)
-    //         center += m_Vertices[vert];
-    //     center /= verts.Count;
-    //     // Pull each vertex towards the center, then correct
-    //     // it's height so that it's as far from the center of
-    //     // the planet as it was before.
-    //     foreach (int vert in verts)
-    //     {
-    //         Vector3 v = m_Vertices[vert];
-    //         float height = v.magnitude;
-    //         v = Vector3.Lerp(v, center, interpolation);
-    //         v = v.normalized * height;
-    //         m_Vertices[vert] = v;
-    //     }
-    //     return stitchedPolys;
-    // }
+
 
     public PolySet Extrude(PolySet polys, float height)
     {

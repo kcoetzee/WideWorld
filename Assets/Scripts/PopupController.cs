@@ -14,7 +14,7 @@ public class PopupController
 
     public GameObject _messagePrefab; 
     public PopupController(){
-        _battleCanvas = GameObject.Find("BattleCanvas");
+        _battleCanvas = GameObject.Find("PopupPrefab");
         _messagePrefab = GameObject.Find("_messagePopup");
         
     }

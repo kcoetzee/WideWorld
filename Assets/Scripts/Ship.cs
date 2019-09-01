@@ -42,8 +42,6 @@ public class Crew
 
 }
 
-
-
 public class Weapon
 {
     public float _damage;
@@ -119,14 +117,13 @@ public class Ship
 
     public PopupController _popupController;
 
-    public Ship(string name ,float health, float dodge, float resistance, int numCrew)
+    public Ship(string name ,float health, float dodge, float resistance)
     {
+        _level = 1;
         _health = health;
         _dodge = dodge;
         _resistance = resistance;
         _crew = new List<Crew>();
-
-        _crew.
 
         _turnMoves = new List<Move>();
         _name = name;
@@ -147,7 +144,7 @@ public class Ship
         {
             if ((Damage - _resistance) > 0.0f){
                 Debug.Log(_name + " TAKES " + (Damage - _resistance).ToString() + " DAMAGE");
-                _popupController.CreatePopup(ABILITIES.NONE,0, _name + " TAKES " + (Damage - _resistance).ToString() + " DAMAGE");
+                // _popupController.CreatePopup(ABILITIES.NONE,0, _name + " TAKES " + (Damage - _resistance).ToString() + " DAMAGE");
                 
                 _health -= (Damage - _resistance);
             } 
@@ -175,7 +172,7 @@ public class Ship
         if (_health <= 0)
         {
             isAlive = false;
-            Debug.Log("DEAD AF SUN!");
+            Debug.Log( _name + ":  IS DEAD AF SUN!");
         }
         _dodgeEnabled = false;
     }
